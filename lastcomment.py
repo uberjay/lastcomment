@@ -10,6 +10,7 @@ import json
 import sys
 import yaml
 
+from termcolor import colored, cprint
 import requests
 
 try:
@@ -118,11 +119,11 @@ def vote(comment, success, failure, log=False):
             if " : SUCCESS" in line:
                 success[job] += 1
                 if log:
-                    print line
+                    print colored(line, 'green')
             if " : FAILURE" in line:
                 failure[job] += 1
                 if log:
-                    print line
+                    print colored(line, 'red')
 
 
 def generate_report(gerrit_url, name, count, project, verify):
@@ -174,10 +175,10 @@ def print_last_comments(gerrit_url, name, count, print_message, project,
     if votes:
         print "success count by job:"
         for job in success.iterkeys():
-            print "* %s: %d" % (job, success[job])
+            print "* %s: %s" % (job, colored(success[job], 'green'))
         print "failure count by job:"
         for job in failure.iterkeys():
-            print "* %s: %d" % (job, failure[job])
+            print "* %s: %s" % (job, colored(failure[job], 'red'))
 
 
 def epoch(timestamp):
