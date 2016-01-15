@@ -9,6 +9,7 @@ import datetime
 import json
 import sys
 import urllib
+from urlparse import urljoin
 import yaml
 
 import requests
@@ -80,11 +81,11 @@ class Comment(object):
         self.now = datetime.datetime.utcnow().replace(microsecond=0)
 
     def __str__(self):
-        return ("%s (%s old) %s/%s '%s' " % (
+        return ("%s (%s old) %s '%s' " % (
             self.date.strftime(TIME_FORMAT),
             self.age(),
-            self.gerrit_url,
-            self.number, self.subject))
+            urljoin(self.gerrit_url, str(self.number)),
+            self.subject))
 
     def age(self):
         return self.now - self.date
@@ -124,9 +125,10 @@ def query_gerrit(gerrit_url, account, count, project, verify=True):
     search = "reviewer:{%s}" % account._account_id
     if project:
         search = search + (" AND project:{%s}" % project)
-    query = ("%s/changes/?q=%s&"
-             "o=MESSAGES&pp=0" % (gerrit_url, urllib.quote_plus(search)))
-    r = requests.get(query, verify=verify)
+
+    url = urljoin(gerrit_url, '/changes/')
+    params = {'pp':'0', 'q':search, 'o':'MESSAGES'}
+    r = requests.get(url, verify=verify, params=params)
     try:
         changes = json.loads(r.text[4:])
     except ValueError:
@@ -156,8 +158,9 @@ def lookup_account(gerrit_url, account_id, verify=True):
     https://review.openstack.org/Documentation/rest-api-accounts.html#account-id
     """
 
-    query = "%s/accounts/%s?pp=0" % (gerrit_url, urllib.quote_plus(account_id))
-    r = requests.get(query, verify=verify)
+    url = urljoin(gerrit_url, '/accounts/')
+    url = urljoin(url, urllib.quote_plus(account_id))
+    r = requests.get(url, verify=verify, params={'pp':'0'})
     try:
         return Account(json.loads(r.text[4:]))
     except ValueError:
